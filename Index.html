@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oman National Day 56 — Photorealistic Interactive 3D Product Studio</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #161412; color: #f8fafc; }
+    #viewport-container { position: relative; width: 100%; height: 100%; overflow: hidden; }
+    canvas { display: block; width: 100%; height: 100%; outline: none; cursor: grab; }
+    canvas:active { cursor: grabbing; }
+    .glass-panel {
+      background: rgba(18, 22, 20, 0.84);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .btn-active {
+      background: #14532d !important;
+      border-color: #eab308 !important;
+      color: #fef08a !important;
+    }
+    input[type="range"] {
+      accent-color: #eab308;
+    }
+  </style>
+</head>
+<body class="select-none">
+  <div id="viewport-container">
+    <!-- 3D Canvas Target -->
+    <div id="canvas-mount" class="w-full h-full"></div>
+
+    <!-- Top Header Bar -->
+    <header class="glass-panel absolute top-3 left-3 right-3 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 z-10 shadow-2xl">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-emerald-950 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold text-sm shadow-inner">
+          56
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm sm:text-base font-semibold tracking-tight text-white">Oman National Day 56 — Commemorative Gift Set</h1>
+            <span class="hidden md:inline-block text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-900/50 text-amber-200 border border-amber-600/40">Photorealistic PBR Studio</span>
+          </div>
+          <p class="text-[11px] text-slate-300">Drag to rotate 360° • Scroll/Pinch to zoom • Right-click or two-finger drag to pan • Click any part to select</p>
+        </div>
+      </div>
+
+      <!-- View Mode Switcher (Complete Set vs Individual Product Views) -->
+      <div class="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-lg border border-slate-700/60">
+        <button id="mode-all" class="px-2.5 py-1 text-xs font-medium rounded-md transition btn-active" title="Show Complete Gift Set">Complete Set</button>
+        <button id="mode-mabkhara" class="px-2.5 py-1 text-xs font-medium rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition" title="Isolate Wooden Mabkhara">Mabkhara Only</button>
+        <button id="mode-box" class="px-2.5 py-1 text-xs font-medium rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition" title="Isolate Incense Storage Box">Incense Box Only</button>
+        <button id="mode-tray" class="px-2.5 py-1 text-xs font-medium rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition" title="Isolate Oval Serving Tray & Tongs">Tray &amp; Tongs</button>
+      </div>
+    </header>
+
+    <!-- Left Control Panel: Camera Views & Assembly Actions -->
+    <aside class="glass-panel absolute top-20 left-3 w-64 sm:w-72 rounded-xl p-3.5 z-10 shadow-2xl flex flex-col gap-3 max-h-[calc(100vh-6rem)] overflow-y-auto">
+      <!-- Camera Presets -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-400/90">Camera Angles</span>
+          <button id="btn-reset-cam" class="text-[11px] font-medium text-emerald-300 hover:text-emerald-200 underline">Reset Camera</button>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button data-cam="iso" class="cam-btn px-2 py-1.5 text-xs font-medium rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/50 text-slate-200 transition btn-active">Isometric</button>
+          <button data-cam="front" class="cam-btn px-2 py-1.5 text-xs font-medium rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/50 text-slate-200 transition">Front</button>
+          <button data-cam="back" class="cam-btn px-2 py-1.5 text-xs font-medium rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/50 text-slate-200 transition">Back</button>
+          <button data-cam="left" class="cam-btn px-2 py-1.5 text-xs font-medium rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/50 text-slate-200 transition">Left</button>
+          <button data-cam="right" class="cam-btn px-2 py-1.5 text-xs font-medium rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/50 text-slate-200 transition">Right</button>
+          <button data-cam="top" class="cam-btn px-2 py-1.5 text-xs font-medium rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/50 text-slate-200 transition">Top</button>
+          <button data-cam="bottom" class="cam-btn col-span-3 px-2 py-1 text-xs font-medium rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/50 text-slate-200 transition">Bottom (Base View)</button>
+        </div>
+      </div>
+
+      <!-- Assembly & Interactive Mechanisms -->
+      <div class="border-t border-slate-700/60 pt-2.5 flex flex-col gap-2.5">
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-400/90">Interactive Mechanisms</span>
+
+        <!-- Exploded Assembly Toggle & Slider -->
+        <div class="bg-slate-900/70 p-2.5 rounded-lg border border-slate-700/50">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs font-medium text-slate-200">Assembly View</span>
+            <button id="btn-toggle-explode" class="px-2.5 py-1 text-xs font-semibold rounded bg-amber-600/20 text-amber-300 border border-amber-500/40 hover:bg-amber-600/30 transition">
+              Explode Model
+            </button>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] text-slate-400">Normal</span>
+            <input id="slider-explode" type="range" min="0" max="100" value="0" class="w-full h-1.5 bg-slate-700 rounded-lg cursor-pointer" />
+            <span class="text-[10px] text-slate-400">Exploded</span>
+          </div>
+        </div>
+
+        <!-- Storage Box Hinged Lid Control -->
+        <div class="bg-slate-900/70 p-2.5 rounded-lg border border-slate-700/50">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs font-medium text-slate-200">Incense Box Lid</span>
+            <button id="btn-toggle-lid" class="px-2.5 py-1 text-xs font-semibold rounded bg-emerald-800/60 text-emerald-200 border border-emerald-600/50 hover:bg-emerald-700/60 transition">
+              Close Lid
+            </button>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] text-slate-400">Closed</span>
+            <input id="slider-lid" type="range" min="0" max="105" value="80" class="w-full h-1.5 bg-slate-700 rounded-lg cursor-pointer" />
+            <span class="text-[10px] text-slate-400">105° Open</span>
+          </div>
+        </div>
+
+        <!-- Branding Plate Option -->
+        <div class="bg-slate-900/70 p-2.5 rounded-lg border border-slate-700/50 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-medium text-slate-200">Branding Zone Mode</div>
+            <div class="text-[10px] text-slate-400">Toggle official 56 logo vs. clean wood</div>
+          </div>
+          <button id="btn-toggle-branding" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-800 text-amber-300 border border-amber-500/40 hover:bg-slate-700 transition btn-active">
+            56 Logo Guide
+          </button>
+        </div>
+      </div>
+
+      <!-- Independent Object Selection & Rotation -->
+      <div class="border-t border-slate-700/60 pt-2.5 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-400/90">Select &amp; Rotate Object</span>
+          <button id="btn-reset-rot" class="text-[11px] text-slate-400 hover:text-white underline">Reset Angles</button>
+        </div>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button data-sel="mabkhara" class="sel-btn px-2 py-1.5 text-xs font-medium rounded bg-slate-800/80 border border-slate-600/50 text-slate-200 transition btn-active">1. Mabkhara</button>
+          <button data-sel="box" class="sel-btn px-2 py-1.5 text-xs font-medium rounded bg-slate-800/80 border border-slate-600/50 text-slate-200 transition">2. Storage Box</button>
+          <button data-sel="tray" class="sel-btn px-2 py-1.5 text-xs font-medium rounded bg-slate-800/80 border border-slate-600/50 text-slate-200 transition">3. Oval Tray</button>
+          <button data-sel="tongs" class="sel-btn px-2 py-1.5 text-xs font-medium rounded bg-slate-800/80 border border-slate-600/50 text-slate-200 transition">4. Gold Tongs</button>
+        </div>
+
+        <div class="bg-slate-900/70 p-2.5 rounded-lg border border-slate-700/50 flex flex-col gap-1.5">
+          <div class="flex justify-between text-[11px]">
+            <span class="text-slate-300">Selected: <strong id="selected-label" class="text-amber-300">Omani Mabkhara</strong></span>
+            <span id="rot-readout" class="text-slate-400 font-mono">Y: 0° | X: 0°</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] text-slate-400 w-10">Spin Y</span>
+            <input id="slider-obj-rot-y" type="range" min="-180" max="180" value="0" class="w-full h-1.5 bg-slate-700 rounded-lg cursor-pointer" />
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] text-slate-400 w-10">Tilt X</span>
+            <input id="slider-obj-rot-x" type="range" min="-90" max="90" value="0" class="w-full h-1.5 bg-slate-700 rounded-lg cursor-pointer" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Display Helpers -->
+      <div class="border-t border-slate-700/60 pt-2 flex items-center justify-between gap-2">
+        <button id="btn-auto-spin" class="flex-1 py-1.5 text-xs font-medium rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/50 text-slate-300 transition">
+          Auto-Turntable: Off
+        </button>
+        <button id="btn-wireframe" class="flex-1 py-1.5 text-xs font-medium rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-600/50 text-slate-300 transition">
+          Wireframe: Off
+        </button>
+      </div>
+    </aside>
+
+    <!-- Bottom Right Inspector Card -->
+    <div id="part-inspector" class="glass-panel absolute bottom-3 right-3 w-72 sm:w-80 rounded-xl p-3.5 z-10 shadow-2xl hidden sm:block">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">Craftsmanship &amp; PBR Finish</span>
+        <span id="spec-tag" class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">1:1 Reference Match</span>
+      </div>
+      <h2 id="spec-title" class="text-sm font-semibold text-white mb-1">1. Omani Wooden Mabkhara</h2>
+      <p id="spec-desc" class="text-xs text-slate-300 leading-relaxed">
+        Natural light maple exterior panels with cathedral wood grain, 2 staggered rows of laser-cut flame apertures, an Omani arch cutout on the tray-facing side, a wider shallow ogee arch beneath the front logo area, deep forest-green pebble-leather inner core, and a recessed matte-black metal burner cup.
+      </p>
+      <div class="mt-2 pt-2 border-t border-slate-700/60 grid grid-cols-3 gap-1 text-[10px] text-slate-400">
+        <div><span class="text-slate-500 block">Exterior</span>Cathedral Maple</div>
+        <div><span class="text-slate-500 block">Inner Core</span>Forest Green</div>
+        <div><span class="text-slate-500 block">Top Insert</span>Matte Black</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. STUDIO IBL ENVIRONMENT & HIGH-RESOLUTION PROCEDURAL PBR TEXTURES
+    // =========================================================================
+
+    // Create a realistic studio HDRI-like equirectangular environment texture for authentic metallic & wood reflections
+    function createStudioEnvironmentTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      // Warm product photography studio ambient gradient
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 512);
+      bgGrad.addColorStop(0, '#3a322c');
+      bgGrad.addColorStop(0.45, '#d8cab8');
+      bgGrad.addColorStop(0.52, '#6b5e53');
+      bgGrad.addColorStop(1, '#241f1c');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 1024, 512);
+
+      // Softbox Key Light highlight (top right)
+      const softbox1 = ctx.createRadialGradient(720, 130, 10, 720, 130, 190);
+      softbox1.addColorStop(0, 'rgba(255, 250, 240, 1.0)');
+      softbox1.addColorStop(0.4, 'rgba(255, 244, 225, 0.65)');
+      softbox1.addColorStop(1, 'rgba(255, 244, 225, 0.0)');
+      ctx.fillStyle = softbox1;
+      ctx.fillRect(480, 0, 480, 340);
+
+      // Warm Rim Strip Light (top left)
+      const softbox2 = ctx.createRadialGradient(240, 150, 10, 240, 150, 170);
+      softbox2.addColorStop(0, 'rgba(255, 238, 210, 0.9)');
+      softbox2.addColorStop(0.5, 'rgba(245, 222, 190, 0.45)');
+      softbox2.addColorStop(1, 'rgba(245, 222, 190, 0.0)');
+      ctx.fillStyle = softbox2;
+      ctx.fillRect(40, 0, 400, 320);
+
+      // Overhead Fill Diffuser
+      const overhead = ctx.createRadialGradient(512, 40, 5, 512, 40, 260);
+      overhead.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+      overhead.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+      ctx.fillStyle = overhead;
+      ctx.fillRect(200, 0, 624, 220);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.mapping = THREE.EquirectangularReflectionMapping;
+      tex.encoding = THREE.sRGBEncoding;
+      return tex;
+    }
+
+    // High-resolution Natural Light Maple Wood Albedo + Bump Map with Cathedral Arch Grain (matching the photo)
+    function createMapleWoodMaps(verticalGrain = true) {
+      const size = 1024;
+      const colorCanvas = document.createElement('canvas');
+      colorCanvas.width = size;
+      colorCanvas.height = size;
+      const ctx = colorCanvas.getContext('2d');
+
+      const bumpCanvas = document.createElement('canvas');
+      bumpCanvas.width = size;
+      bumpCanvas.height = size;
+      const bctx = bumpCanvas.getContext('2d');
+
+      if (!verticalGrain) {
+        ctx.translate(size / 2, size / 2);
+        ctx.rotate(Math.PI / 2);
+        ctx.translate(-size / 2, -size / 2);
+        bctx.translate(size / 2, size / 2);
+        bctx.rotate(Math.PI / 2);
+        bctx.translate(-size / 2, -size / 2);
+      }
+
+      // Rich warm creamy-honey maple base tone
+      const baseGrad = ctx.createLinearGradient(0, 0, size, 0);
+      baseGrad.addColorStop(0, '#e3bf96');
+      baseGrad.addColorStop(0.28, '#eacaa4');
+      baseGrad.addColorStop(0.55, '#dfc09b');
+      baseGrad.addColorStop(0.82, '#e8c7a0');
+      baseGrad.addColorStop(1, '#dcba91');
+      ctx.fillStyle = baseGrad;
+      ctx.fillRect(0, 0, size, size);
+
+      bctx.fillStyle = '#808080';
+      bctx.fillRect(0, 0, size, size);
+
+      // Fine vertical wood pores and medullary rays
+      for (let i = 0; i < 1600; i++) {
+        const x = (i * 73) % size;
+        const y = (i * 197) % size;
+        const len = 35 + (i % 95);
+        const w = 0.6 + (i % 3) * 0.55;
+        const alpha = 0.025 + (i % 5) * 0.012;
+        ctx.fillStyle = i % 2 === 0 ? `rgba(132, 82, 42, ${alpha})` : `rgba(252, 236, 212, ${alpha})`;
+        ctx.fillRect(x, y, w, len);
+
+        bctx.fillStyle = i % 2 === 0 ? 'rgba(95, 95, 95, 0.25)' : 'rgba(155, 155, 155, 0.2)';
+        bctx.fillRect(x, y, w, len);
+      }
+
+      // Authentic cathedral arch growth rings (characteristic of natural rotary-cut maple/birch veneer in photo)
+      const cathedralCenters = [260, 740];
+      cathedralCenters.forEach((cx, idx) => {
+        for (let ring = 1; ring <= 28; ring++) {
+          const rx = ring * 13.5;
+          const ry = ring * 38;
+          const peakY = 140 + idx * 80 + ring * 6;
+
+          ctx.strokeStyle = ring % 3 === 0 ? 'rgba(138, 86, 44, 0.14)' : 'rgba(156, 102, 56, 0.08)';
+          ctx.lineWidth = ring % 4 === 0 ? 2.6 : 1.4;
+          ctx.beginPath();
+          for (let y = 0; y <= size; y += 8) {
+            const dy = (y - peakY) / ry;
+            const wave = Math.sin(y * 0.018 + ring * 0.4) * 5.5;
+            const offset = Math.sqrt(Math.max(0.02, dy * dy + 0.15)) * rx + wave;
+            // Left and right sides of the cathedral arch
+            const lx = cx - offset;
+            if (y === 0) ctx.moveTo(lx, y);
+            else ctx.lineTo(lx, y);
+          }
+          ctx.stroke();
+
+          ctx.beginPath();
+          for (let y = 0; y <= size; y += 8) {
+            const dy = (y - peakY) / ry;
+            const wave = Math.cos(y * 0.016 + ring * 0.3) * 5.5;
+            const offset = Math.sqrt(Math.max(0.02, dy * dy + 0.15)) * rx + wave;
+            const rxPos = cx + offset;
+            if (y === 0) ctx.moveTo(rxPos, y);
+            else ctx.lineTo(rxPos, y);
+          }
+          ctx.stroke();
+
+          bctx.strokeStyle = 'rgba(105, 105, 105, 0.22)';
+          bctx.lineWidth = 1.5;
+          bctx.stroke();
+        }
+      });
+
+      const colorMap = new THREE.CanvasTexture(colorCanvas);
+      colorMap.encoding = THREE.sRGBEncoding;
+      colorMap.anisotropy = 8;
+
+      const bumpMap = new THREE.CanvasTexture(bumpCanvas);
+      bumpMap.anisotropy = 8;
+
+      return { colorMap, bumpMap };
+    }
+
+    // Deep Forest-Green Pebble-Grain Leatherette / Matte Textured Finish
+    function createForestGreenPebbleMaps() {
+      const size = 512;
+      const cCanvas = document.createElement('canvas');
+      cCanvas.width = size;
+      cCanvas.height = size;
+      const ctx = cCanvas.getContext('2d');
+
+      const bCanvas = document.createElement('canvas');
+      bCanvas.width = size;
+      bCanvas.height = size;
+      const bctx = bCanvas.getContext('2d');
+
+      ctx.fillStyle = '#183326';
+      ctx.fillRect(0, 0, size, size);
+
+      bctx.fillStyle = '#787878';
+      bctx.fillRect(0, 0, size, size);
+
+      // High-density micro-pebble grain matching the green leatherette box and recessed liners
+      for (let i = 0; i < 14000; i++) {
+        const x = (i * 97) % size + ((i % 7) - 3) * 0.4;
+        const y = (i * 53) % size + ((i % 5) - 2) * 0.4;
+        const r = 0.8 + (i % 4) * 0.45;
+        ctx.fillStyle = i % 2 === 0 ? 'rgba(11, 24, 18, 0.36)' : 'rgba(38, 72, 55, 0.24)';
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        bctx.fillStyle = i % 2 === 0 ? 'rgba(215, 215, 215, 0.42)' : 'rgba(45, 45, 45, 0.42)';
+        bctx.beginPath();
+        bctx.arc(x, y, r, 0, Math.PI * 2);
+        bctx.fill();
+      }
+
+      const colorMap = new THREE.CanvasTexture(cCanvas);
+      colorMap.encoding = THREE.sRGBEncoding;
+      colorMap.wrapS = THREE.RepeatWrapping;
+      colorMap.wrapT = THREE.RepeatWrapping;
+      colorMap.repeat.set(3, 3);
+
+      const bumpMap = new THREE.CanvasTexture(bCanvas);
+      bumpMap.wrapS = THREE.RepeatWrapping;
+      bumpMap.wrapT = THREE.RepeatWrapping;
+      bumpMap.repeat.set(3, 3);
+
+      return { colorMap, bumpMap };
+    }
+
+    // Gold Geometric Islamic Star Lattice on the Front Lower Panel of the Green Storage Box
+    function createGoldIslamicBoxFrontTexture() {
+      const w = 1024, h = 320;
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+
+      // Deep forest-green pebble background
+      ctx.fillStyle = '#183326';
+      ctx.fillRect(0, 0, w, h);
+
+      for (let i = 0; i < 9000; i++) {
+        const px = (i * 89) % w;
+        const py = (i * 47) % h;
+        ctx.fillStyle = i % 2 === 0 ? 'rgba(10, 22, 16, 0.32)' : 'rgba(36, 68, 52, 0.2)';
+        ctx.fillRect(px, py, 2, 2);
+      }
+
+      // Subtle diagonal fade on the right third (matching the photo's geometric gold band)
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(0, 88);
+      ctx.lineTo(w * 0.78, 88);
+      ctx.lineTo(w * 0.62, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.clip();
+
+      // Fine gold geometric 8-point rosette & diamond lattice
+      ctx.strokeStyle = '#c89e46';
+      ctx.lineWidth = 2.4;
+      const step = 46;
+      for (let x = 0; x <= w * 0.8; x += step) {
+        for (let y = 96; y <= h + step; y += step) {
+          // Outer square
+          ctx.strokeRect(x - step * 0.34, y - step * 0.34, step * 0.68, step * 0.68);
+          // Rotated square (8-point star)
+          ctx.beginPath();
+          ctx.moveTo(x, y - step * 0.48);
+          ctx.lineTo(x + step * 0.48, y);
+          ctx.lineTo(x, y + step * 0.48);
+          ctx.lineTo(x - step * 0.48, y);
+          ctx.closePath();
+          ctx.stroke();
+
+          // Connecting cross lines
+          ctx.beginPath();
+          ctx.moveTo(x - step * 0.5, y - step * 0.5);
+          ctx.lineTo(x + step * 0.5, y + step * 0.5);
+          ctx.moveTo(x + step * 0.5, y - step * 0.5);
+          ctx.lineTo(x - step * 0.5, y + step * 0.5);
+          ctx.stroke();
+        }
+      }
+
+      // Top gold border rule
+      ctx.strokeStyle = '#d7af50';
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.moveTo(0, 90);
+      ctx.lineTo(w * 0.78, 90);
+      ctx.stroke();
+      ctx.restore();
+
+      // Subtle dark perimeter stitching groove near top of box base
+      ctx.strokeStyle = 'rgba(8, 18, 13, 0.75)';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(10, 10, w - 20, h - 20);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.encoding = THREE.sRGBEncoding;
+      tex.anisotropy = 8;
+      return tex;
+    }
+
+    // Carrara White & Warm Gold-Veined Marble Tabletop Texture (matching the studio tabletop in the reference photo)
+    function createCarraraMarbleTexture() {
+      const size = 1024;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // Warm cream-white polished stone base
+      const grad = ctx.createLinearGradient(0, 0, size, size);
+      grad.addColorStop(0, '#f4efe8');
+      grad.addColorStop(0.5, '#ede5dc');
+      grad.addColorStop(1, '#e6dcd0');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+
+      // Soft warm taupe & golden-brown mineral clouds
+      for (let c = 0; c < 14; c++) {
+        const cx = (c * 173) % size;
+        const cy = (c * 241) % size;
+        const rad = 120 + (c % 5) * 60;
+        const g = ctx.createRadialGradient(cx, cy, 10, cx, cy, rad);
+        g.addColorStop(0, 'rgba(196, 174, 152, 0.16)');
+        g.addColorStop(1, 'rgba(196, 174, 152, 0.0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, size, size);
+      }
+
+      // Organic diagonal marble veins
+      for (let v = 0; v < 22; v++) {
+        ctx.strokeStyle = v % 3 === 0 ? 'rgba(162, 136, 112, 0.24)' : 'rgba(185, 165, 145, 0.16)';
+        ctx.lineWidth = 1.2 + (v % 4) * 1.1;
+        ctx.beginPath();
+        let x = (v * 95) % size;
+        let y = 0;
+        ctx.moveTo(x, y);
+        for (let step = 0; step < 32; step++) {
+          x += 18 + Math.sin(step * 0.7 + v) * 22;
+          y += 34;
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.encoding = THREE.sRGBEncoding;
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(2, 2);
+      return tex;
+    }
+
+    // Official Oman Housing Bank + Oman National Day 56 Logo Lockup (transparent overlay for wood & cream suede)
+    function createOfficialBrandingTexture(isCreamLiner, showLogo) {
+      const w = 1024, h = 440;
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+
+      if (isCreamLiner) {
+        // Warm cream microfiber suede inner lid card
+        ctx.fillStyle = '#e7d6be';
+        ctx.fillRect(0, 0, w, h);
+        for (let i = 0; i < 6000; i++) {
+          const x = (i * 97) % w;
+          const y = (i * 61) % h;
+          ctx.fillStyle = i % 2 === 0 ? 'rgba(195, 172, 142, 0.18)' : 'rgba(250, 240, 225, 0.18)';
+          ctx.fillRect(x, y, 2, 2);
+        }
+      } else {
+        ctx.clearRect(0, 0, w, h);
+      }
+
+      if (showLogo) {
+        const burgundy = '#6c1622';
+        const goldNum = '#b5852a';
+
+        // Center vertical divider line
+        ctx.strokeStyle = burgundy;
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(500, 70);
+        ctx.lineTo(500, 365);
+        ctx.stroke();
+
+        // LEFT SIDE: Oman Housing Bank Emblem & Typography
+        const cx = 265, cy = 165, rOuter = 74, rInner = 56;
+        ctx.strokeStyle = burgundy;
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const ang = (i * Math.PI) / 4 + Math.PI / 8;
+          const px = cx + rOuter * Math.cos(ang);
+          const py = cy + rOuter * Math.sin(ang);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const ang = (i * Math.PI) / 4 + Math.PI / 8;
+          const px = cx + rInner * Math.cos(ang);
+          const py = cy + rInner * Math.sin(ang);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+
+        // Roof arch and family silhouette inside octagon
+        ctx.fillStyle = burgundy;
+        ctx.beginPath();
+        ctx.moveTo(cx - 34, cy + 4);
+        ctx.lineTo(cx, cy - 30);
+        ctx.lineTo(cx + 34, cy + 4);
+        ctx.lineTo(cx + 22, cy + 4);
+        ctx.lineTo(cx, cy - 16);
+        ctx.lineTo(cx - 22, cy + 4);
+        ctx.closePath();
+        ctx.fill();
+
+        // Family silhouettes inside arch
+        ctx.beginPath();
+        ctx.arc(cx - 12, cy + 10, 6, 0, Math.PI * 2);
+        ctx.arc(cx + 12, cy + 10, 6, 0, Math.PI * 2);
+        ctx.arc(cx, cy + 20, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(cx - 18, cy + 18, 11, 20);
+        ctx.fillRect(cx + 7, cy + 18, 11, 20);
+        ctx.fillRect(cx - 5, cy + 26, 10, 12);
+
+        ctx.fillStyle = burgundy;
+        ctx.font = 'bold 34px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('بنك الإسكان العُماني ش.م.ع.م.', cx, 298);
+        ctx.font = 'bold 25px Inter, sans-serif';
+        ctx.fillText('OMAN HOUSING BANK S.A.O.C.', cx, 342);
+
+        // RIGHT SIDE: Oman National Day 56 + Waving Omani Flag
+        ctx.fillStyle = burgundy;
+        ctx.font = 'bold 36px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('اليوم الوطني العُماني', 675, 165);
+
+        ctx.fillStyle = goldNum;
+        ctx.font = 'bold 112px Inter, sans-serif';
+        ctx.fillText('56', 675, 295);
+
+        // Flagpole
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(805, 92);
+        ctx.lineTo(805, 340);
+        ctx.stroke();
+
+        // Waving Omani Flag (White, Red, Green + Red vertical stripe with emblem)
+        const fx = 808, fy = 104, fw = 128, fh = 82;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(fx, fy, fw, fh / 3);
+        ctx.fillStyle = '#c8102e';
+        ctx.fillRect(fx, fy + fh / 3, fw, fh / 3);
+        ctx.fillStyle = '#007a3d';
+        ctx.fillRect(fx, fy + (2 * fh) / 3, fw, fh / 3);
+        ctx.fillStyle = '#c8102e';
+        ctx.fillRect(fx, fy, 38, fh);
+
+        // White Khanjar emblem in top-left of red bar
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(fx + 10, fy + 10);
+        ctx.lineTo(fx + 28, fy + 26);
+        ctx.moveTo(fx + 28, fy + 10);
+        ctx.lineTo(fx + 10, fy + 26);
+        ctx.stroke();
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.encoding = THREE.sRGBEncoding;
+      tex.anisotropy = 8;
+      return tex;
+    }
+
+    // Soft Ground Contact Shadow Texture
+    function createSoftContactShadowTexture() {
+      const size = 256;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const grad = ctx.createRadialGradient(size / 2, size / 2, 12, size / 2, size / 2, size / 2);
+      grad.addColorStop(0, 'rgba(15, 12, 10, 0.55)');
+      grad.addColorStop(0.55, 'rgba(15, 12, 10, 0.22)');
+      grad.addColorStop(1, 'rgba(15, 12, 10, 0.0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    // =========================================================================
+    // 2. SCENE, CAMERA, RENDERER & STUDIO PRODUCT PHOTOGRAPHY LIGHTING
+    // =========================================================================
+    const mount = document.getElementById('canvas-mount');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1f1b18);
+
+    const studioEnvTex = createStudioEnvironmentTexture();
+    scene.environment = studioEnvTex;
+
+    const camera = new THREE.PerspectiveCamera(35, mount.clientWidth / mount.clientHeight, 0.1, 200);
+    // Exact camera angle matching the uploaded reference photograph
+    camera.position.set(14.5, 10.8, 17.5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(mount.clientWidth, mount.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    mount.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.target.set(-0.2, 2.1, 0.2);
+    controls.minDistance = 4.5;
+    controls.maxDistance = 46;
+
+    // Warm Studio Key, Fill, Rim, and Bounce Lights
+    const hemiLight = new THREE.HemisphereLight(0xfff8ed, 0x2b2520, 0.65);
+    scene.add(hemiLight);
+
+    const keyLight = new THREE.DirectionalLight(0xfff5e4, 1.45);
+    keyLight.position.set(12, 22, 15);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 2048;
+    keyLight.shadow.mapSize.height = 2048;
+    keyLight.shadow.camera.near = 3;
+    keyLight.shadow.camera.far = 55;
+    const sd = 12;
+    keyLight.shadow.camera.left = -sd;
+    keyLight.shadow.camera.right = sd;
+    keyLight.shadow.camera.top = sd;
+    keyLight.shadow.camera.bottom = -sd;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xfef3c7, 0.52);
+    fillLight.position.set(-15, 10, 12);
+    scene.add(fillLight);
+
+    const backRimLight = new THREE.DirectionalLight(0xffedd5, 0.65);
+    backRimLight.position.set(-6, 14, -16);
+    scene.add(backRimLight);
+
+    // Subtle Studio Marble Plinth (automatically hides when viewing from below so bottom view is unobstructed)
+    const marbleTex = createCarraraMarbleTexture();
+    const studioTableMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(16, 16, 0.28, 64),
+      new THREE.MeshStandardMaterial({
+        map: marbleTex,
+        roughness: 0.18,
+        metalness: 0.05,
+        envMapIntensity: 0.65
+      })
+    );
+    studioTableMesh.position.y = -0.15;
+    studioTableMesh.receiveShadow = true;
+    scene.add(studioTableMesh);
+
+    // Contact shadow planes under the tray and storage box for grounded realism
+    const contactShadowTex = createSoftContactShadowTexture();
+    const trayShadowPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(13.5, 7.2),
+      new THREE.MeshBasicMaterial({ map: contactShadowTex, transparent: true, depthWrite: false, opacity: 0.78 })
+    );
+    trayShadowPlane.rotation.x = -Math.PI / 2;
+    trayShadowPlane.position.set(1.1, 0.005, 0.8);
+    scene.add(trayShadowPlane);
+
+    const boxShadowPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(7.2, 4.4),
+      new THREE.MeshBasicMaterial({ map: contactShadowTex, transparent: true, depthWrite: false, opacity: 0.78 })
+    );
+    boxShadowPlane.rotation.x = -Math.PI / 2;
+    boxShadowPlane.position.set(-4.3, 0.005, -1.6);
+    boxShadowPlane.rotation.z = -0.22;
+    scene.add(boxShadowPlane);
+
+    // =========================================================================
+    // 3. PHYSICALLY BASED MATERIALS (PBR)
+    // =========================================================================
+    const mapleVert = createMapleWoodMaps(true);
+    const mapleHoriz = createMapleWoodMaps(false);
+    const greenPebble = createForestGreenPebbleMaps();
+    const goldBoxFrontTex = createGoldIslamicBoxFrontTexture();
+
+    const mapleVerticalMat = new THREE.MeshStandardMaterial({
+      map: mapleVert.colorMap,
+      bumpMap: mapleVert.bumpMap,
+      bumpScale: 0.016,
+      roughness: 0.44,
+      metalness: 0.02,
+      envMapIntensity: 0.55
+    });
+
+    const mapleHorizontalMat = new THREE.MeshStandardMaterial({
+      map: mapleHoriz.colorMap,
+      bumpMap: mapleHoriz.bumpMap,
+      bumpScale: 0.016,
+      roughness: 0.42,
+      metalness: 0.02,
+      envMapIntensity: 0.58
+    });
+
+    const forestGreenMat = new THREE.MeshStandardMaterial({
+      map: greenPebble.colorMap,
+      bumpMap: greenPebble.bumpMap,
+      bumpScale: 0.022,
+      roughness: 0.64,
+      metalness: 0.04,
+      envMapIntensity: 0.4
+    });
+
+    // Dark laser-charred wood border / structural edge
+    const darkBorderMat = new THREE.MeshStandardMaterial({
+      color: 0x1c1410,
+      roughness: 0.58,
+      metalness: 0.06,
+      envMapIntensity: 0.35
+    });
+
+    // Dark green painted structural base border
+    const darkGreenStructuralMat = new THREE.MeshStandardMaterial({
+      map: greenPebble.colorMap,
+      color: 0x132a1f,
+      roughness: 0.55,
+      metalness: 0.06,
+      envMapIntensity: 0.45
+    });
+
+    // Powder-coated matte black metal incense burner bowl
+    const blackMetalMat = new THREE.MeshStandardMaterial({
+      color: 0x1b1d20,
+      roughness: 0.34,
+      metalness: 0.72,
+      envMapIntensity: 0.9
+    });
+
+    // Brushed & polished gold metal for the engraved tongs and box knob
+    const polishedGoldMat = new THREE.MeshStandardMaterial({
+      color: 0xe5be53,
+      roughness: 0.16,
+      metalness: 0.94,
+      envMapIntensity: 1.35
+    });
+
+    const engravedGoldRecessMat = new THREE.MeshStandardMaterial({
+      color: 0x8f6b24,
+      roughness: 0.42,
+      metalness: 0.78,
+      envMapIntensity: 0.8
+    });
+
+    // Translucent Omani Frankincense (Luban) tears
+    const frankincenseMat = new THREE.MeshStandardMaterial({
+      color: 0xdfb16b,
+      roughness: 0.32,
+      metalness: 0.03,
+      envMapIntensity: 0.6
+    });
+    const frankincenseLightMat = new THREE.MeshStandardMaterial({
+      color: 0xebd09e,
+      roughness: 0.38,
+      metalness: 0.02,
+      envMapIntensity: 0.5
+    });
+
+    // =========================================================================
+    // 4. RECONSTRUCTING THE EXACT GEOMETRY FROM THE REFERENCE PHOTO
+    // =========================================================================
+    const selectableGroups = {};
+    const explodeTargets = [];
+
+    function registerExplodePart(obj, normalVec, explodedOffsetVec) {
+      obj.position.copy(normalVec);
+      explodeTargets.push({
+        obj,
+        normalPos: normalVec.clone(),
+        explodedPos: normalVec.clone().add(explodedOffsetVec)
+      });
+    }
+
+    // Helper: Build exact Mabkhara laser-cut maple panel matching the reference photograph
+    // - 'side_arch': Tall rounded-arch window above 2 staggered rows of S-flame cutouts (Left & Back faces)
+    // - 'front_brand': Wide shallow ogee-arch cutout above 2 staggered rows of S-flame cutouts, leaving flat upper wood for the logo (Front & Right faces)
+    function buildExactMabkharaPanel(panelStyle) {
+      const w = 3.92, h = 4.46, depth = 0.20;
+      const shape = new THREE.Shape();
+      shape.moveTo(-w / 2, -h / 2);
+      shape.lineTo(w / 2, -h / 2);
+      shape.lineTo(w / 2, h / 2);
+      shape.lineTo(-w / 2, h / 2);
+      shape.closePath();
+
+      // Exact 2 staggered rows of organic S-curved laser-cut flame apertures along the lower half
+      const cols = 7;
+      const spanX = 3.44;
+      const dx = spanX / cols;
+      const startX = -spanX / 2 + dx / 2;
+
+      for (let row = 0; row < 2; row++) {
+        const y0 = -2.06 + row * 0.86;
+        const rowShift = row === 1 ? 0.06 : -0.05;
+        for (let c = 0; c < cols; c++) {
+          const cx = startX + c * dx + rowShift;
+          const flame = new THREE.Path();
+          // S-curved organic flame leaf matching the photo's laser cutouts
+          flame.moveTo(cx - 0.02, y0);
+          flame.bezierCurveTo(cx + 0.24, y0 + 0.22, cx + 0.16, y0 + 0.54, cx - 0.03, y0 + 0.78);
+          flame.bezierCurveTo(cx - 0.18, y0 + 0.54, cx - 0.20, y0 + 0.24, cx - 0.02, y0);
+          shape.holes.push(flame);
+        }
+      }
+
+      if (panelStyle === 'side_arch') {
+        // Tall arched opening on the tray-facing side (and rear) with flanking side flames
+        const arch = new THREE.Path();
+        const aw = 2.04;
+        const yBot = -0.24;
+        const ySpring = 0.76;
+        const yTop = 1.68;
+        arch.moveTo(-aw / 2, yBot);
+        arch.lineTo(aw / 2, yBot);
+        arch.lineTo(aw / 2, ySpring);
+        arch.bezierCurveTo(aw / 2, yTop - 0.12, 0.35, yTop, 0, yTop);
+        arch.bezierCurveTo(-0.35, yTop, -aw / 2, yTop - 0.12, -aw / 2, ySpring);
+        arch.closePath();
+        shape.holes.push(arch);
+
+        // Side vertical accent flames flanking the arch (matching reference photo)
+        [-1.44, 1.44].forEach((fx) => {
+          const sideFlame = new THREE.Path();
+          sideFlame.moveTo(fx, -0.22);
+          sideFlame.bezierCurveTo(fx + 0.20, 0.12, fx + 0.12, 0.52, fx - 0.02, 0.82);
+          sideFlame.bezierCurveTo(fx - 0.16, 0.52, fx - 0.18, 0.12, fx, -0.22);
+          shape.holes.push(sideFlame);
+        });
+      } else {
+        // Front / Right panel: wider, lower Omani ogee dome arch cutout below the flat upper branding surface
+        const dome = new THREE.Path();
+        const dw = 2.36;
+        const yBot = -0.24;
+        const ySide = 0.04;
+        const yPeak = 0.52;
+        dome.moveTo(-dw / 2, yBot);
+        dome.lineTo(dw / 2, yBot);
+        dome.lineTo(dw / 2, ySide);
+        dome.bezierCurveTo(dw * 0.38, ySide + 0.25, 0.28, yPeak - 0.14, 0, yPeak);
+        dome.bezierCurveTo(-0.28, yPeak - 0.14, -dw * 0.38, ySide + 0.25, -dw / 2, ySide);
+        dome.closePath();
+        shape.holes.push(dome);
+
+        // Flanking accent flames on the outer edges of the dome
+        [-1.48, 1.48].forEach((fx) => {
+          const sideFlame = new THREE.Path();
+          sideFlame.moveTo(fx, -0.22);
+          sideFlame.bezierCurveTo(fx + 0.18, 0.05, fx + 0.12, 0.38, fx - 0.02, 0.62);
+          sideFlame.bezierCurveTo(fx - 0.15, 0.38, fx - 0.16, 0.05, fx, -0.22);
+          shape.holes.push(sideFlame);
+        });
+      }
+
+      const geo = new THREE.ExtrudeGeometry(shape, {
+        depth: depth,
+        bevelEnabled: true,
+        bevelThickness: 0.015,
+        bevelSize: 0.012,
+        bevelSegments: 2,
+        curveSegments: 22
+      });
+      geo.center();
+
+      // Normalize planar UVs so cathedral maple grain maps cleanly across each panel
+      const pos = geo.attributes.position;
+      const uvs = geo.attributes.uv;
+      for (let i = 0; i < pos.count; i++) {
+        uvs.setXY(i, (pos.getX(i) + w / 2) / w, (pos.getY(i) + h / 2) / h);
+      }
+
+      const mesh = new THREE.Mesh(geo, [mapleVerticalMat, darkBorderMat]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      return mesh;
+    }
+
+    // =========================================================================
+    // PRODUCT 1: OMANI WOODEN MABKHARA (SQUARE INCENSE BURNER)
+    // =========================================================================
+    const mabkharaGroup = new THREE.Group();
+    // Positioned on the right square platform of the serving tray
+    mabkharaGroup.position.set(3.25, 0.50, 0.65);
+    scene.add(mabkharaGroup);
+    selectableGroups['mabkhara'] = mabkharaGroup;
+
+    // 1A. Deep Forest-Green Textured Inner Core with Subtle Horizontal Molding Line (visible inside arch in photo)
+    const coreGroup = new THREE.Group();
+    const coreBox = new THREE.Mesh(new THREE.BoxGeometry(3.72, 4.40, 3.72), forestGreenMat);
+    coreBox.castShadow = true;
+    coreBox.receiveShadow = true;
+    coreGroup.add(coreBox);
+
+    // Subtle horizontal recessed seam across the green inner panel (visible inside the arch in reference photo)
+    const seamBand = new THREE.Mesh(new THREE.BoxGeometry(3.76, 0.06, 3.76), darkGreenStructuralMat);
+    seamBand.position.y = 0.02;
+    coreGroup.add(seamBand);
+
+    mabkharaGroup.add(coreGroup);
+    registerExplodePart(coreGroup, new THREE.Vector3(0, 2.22, 0), new THREE.Vector3(0, 0.6, 0));
+
+    // 1B. Dark Structural Frame Corner Borders & Top/Bottom Dark Trim
+    const cornerCoords = [
+      [-1.94, -1.94],
+      [1.94, -1.94],
+      [1.94, 1.94],
+      [-1.94, 1.94]
+    ];
+    cornerCoords.forEach(([cx, cz]) => {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.18, 4.48, 0.18), darkBorderMat);
+      post.castShadow = true;
+      mabkharaGroup.add(post);
+      registerExplodePart(post, new THREE.Vector3(cx, 2.24, cz), new THREE.Vector3(cx * 0.65, 0, cz * 0.65));
+    });
+
+    // Dark structural collar directly under the top maple cap
+    const topDarkCollar = new THREE.Mesh(new THREE.BoxGeometry(4.06, 0.10, 4.06), darkBorderMat);
+    mabkharaGroup.add(topDarkCollar);
+    registerExplodePart(topDarkCollar, new THREE.Vector3(0, 4.49, 0), new THREE.Vector3(0, 1.85, 0));
+
+    // 1C. Four Laser-Cut Maple Panels
+    // Front Panel (+Z): Wide lower ogee cutout + Official Oman Housing Bank & National Day 56 Logo
+    const frontPanelContainer = new THREE.Group();
+    const frontPanelMesh = buildExactMabkharaPanel('front_brand');
+    frontPanelContainer.add(frontPanelMesh);
+
+    const mabkharaLogoTex = createOfficialBrandingTexture(false, true);
+    const mabkharaBlankTex = createOfficialBrandingTexture(false, false);
+    const mabkharaLogoMat = new THREE.MeshStandardMaterial({
+      map: mabkharaLogoTex,
+      roughness: 0.42,
+      metalness: 0.04,
+      transparent: true,
+      opacity: 1.0,
+      depthWrite: false
+    });
+    const mabkharaLogoPlane = new THREE.Mesh(new THREE.PlaneGeometry(3.25, 1.38), mabkharaLogoMat);
+    mabkharaLogoPlane.position.set(0, 1.24, 0.116);
+    frontPanelContainer.add(mabkharaLogoPlane);
+
+    mabkharaGroup.add(frontPanelContainer);
+    registerExplodePart(frontPanelContainer, new THREE.Vector3(0, 2.23, 1.95), new THREE.Vector3(0, 0, 2.65));
+
+    // Back Panel (-Z)
+    const backPanelMesh = buildExactMabkharaPanel('side_arch');
+    backPanelMesh.rotation.y = Math.PI;
+    mabkharaGroup.add(backPanelMesh);
+    registerExplodePart(backPanelMesh, new THREE.Vector3(0, 2.23, -1.95), new THREE.Vector3(0, 0, -2.65));
+
+    // Left Panel (-X, facing the oval tray & gold tongs): Tall Omani arch opening
+    const leftPanelMesh = buildExactMabkharaPanel('side_arch');
+    leftPanelMesh.rotation.y = -Math.PI / 2;
+    mabkharaGroup.add(leftPanelMesh);
+    registerExplodePart(leftPanelMesh, new THREE.Vector3(-1.95, 2.23, 0), new THREE.Vector3(-2.65, 0, 0));
+
+    // Right Panel (+X)
+    const rightPanelMesh = buildExactMabkharaPanel('front_brand');
+    rightPanelMesh.rotation.y = Math.PI / 2;
+    mabkharaGroup.add(rightPanelMesh);
+    registerExplodePart(rightPanelMesh, new THREE.Vector3(1.95, 2.23, 0), new THREE.Vector3(2.65, 0, 0));
+
+    // 1D. Top Maple Cap with Circular Burner Opening
+    const topCapGroup = new THREE.Group();
+    const capSize = 4.14;
+    const capShape = new THREE.Shape();
+    capShape.moveTo(-capSize / 2, -capSize / 2);
+    capShape.lineTo(capSize / 2, -capSize / 2);
+    capShape.lineTo(capSize / 2, capSize / 2);
+    capShape.lineTo(-capSize / 2, capSize / 2);
+    capShape.closePath();
+
+    const capHole = new THREE.Path();
+    capHole.absarc(0, 0, 1.34, 0, Math.PI * 2, false);
+    capShape.holes.push(capHole);
+
+    const capGeo = new THREE.ExtrudeGeometry(capShape, {
+      depth: 0.22,
+      bevelEnabled: true,
+      bevelThickness: 0.015,
+      bevelSize: 0.015,
+      bevelSegments: 2,
+      curveSegments: 40
+    });
+    capGeo.rotateX(Math.PI / 2);
+    capGeo.center();
+
+    const cPos = capGeo.attributes.position;
+    const cUvs = capGeo.attributes.uv;
+    for (let i = 0; i < cPos.count; i++) {
+      cUvs.setXY(i, (cPos.getX(i) + capSize / 2) / capSize, (cPos.getZ(i) + capSize / 2) / capSize);
+    }
+
+    const topCapMesh = new THREE.Mesh(capGeo, [mapleHorizontalMat, darkBorderMat]);
+    topCapMesh.castShadow = true;
+    topCapMesh.receiveShadow = true;
+    topCapGroup.add(topCapMesh);
+    mabkharaGroup.add(topCapGroup);
+    registerExplodePart(topCapGroup, new THREE.Vector3(0, 4.60, 0), new THREE.Vector3(0, 2.35, 0));
+
+    // 1E. Recessed Matte-Black Circular Metal Incense Burner Bowl + Authentic Frankincense Tears
+    const burnerInsertGroup = new THREE.Group();
+
+    // Raised rounded black metal rim lip sitting flush on the maple top cap
+    const rimTorus = new THREE.Mesh(new THREE.TorusGeometry(1.48, 0.14, 20, 64), blackMetalMat);
+    rimTorus.rotation.x = Math.PI / 2;
+    rimTorus.scale.set(1, 1, 0.55);
+    rimTorus.castShadow = true;
+    burnerInsertGroup.add(rimTorus);
+
+    // Outer recessed metal wall
+    const cupWall = new THREE.Mesh(new THREE.CylinderGeometry(1.34, 1.12, 0.72, 48, 1, true), blackMetalMat);
+    cupWall.position.y = -0.36;
+    burnerInsertGroup.add(cupWall);
+
+    // Inner concave dark metal bowl
+    const cupFloor = new THREE.Mesh(new THREE.CylinderGeometry(1.30, 1.08, 0.12, 48), blackMetalMat);
+    cupFloor.position.y = -0.18;
+    cupFloor.receiveShadow = true;
+    burnerInsertGroup.add(cupFloor);
+
+    // Mound of golden-amber Omani Frankincense (Luban) tears in the center of the black bowl
+    const burnerResinPositions = [
+      [0, 0.02, 0, 0.22],
+      [-0.32, 0.0, 0.12, 0.19],
+      [0.30, 0.01, -0.08, 0.20],
+      [0.08, 0.0, 0.34, 0.18],
+      [-0.14, 0.0, -0.32, 0.19],
+      [-0.48, -0.03, -0.18, 0.17],
+      [0.46, -0.02, 0.25, 0.17],
+      [-0.22, 0.08, -0.05, 0.16],
+      [0.18, 0.09, 0.15, 0.16],
+      [-0.05, 0.12, 0.04, 0.15],
+      [0.36, -0.04, -0.34, 0.16],
+      [-0.38, -0.04, 0.36, 0.16]
+    ];
+    burnerResinPositions.forEach(([rx, ry, rz, rad], idx) => {
+      const geo = new THREE.DodecahedronGeometry(rad, 1);
+      const tear = new THREE.Mesh(geo, idx % 2 === 0 ? frankincenseMat : frankincenseLightMat);
+      tear.position.set(rx, ry, rz);
+      tear.rotation.set(idx * 1.1, idx * 0.7, idx * 0.5);
+      tear.scale.set(1.25, 0.82, 1.05);
+      tear.castShadow = true;
+      burnerInsertGroup.add(tear);
+    });
+
+    mabkharaGroup.add(burnerInsertGroup);
+    registerExplodePart(burnerInsertGroup, new THREE.Vector3(0, 4.74, 0), new THREE.Vector3(0, 4.25, 0));
+
+    // =========================================================================
+    // PRODUCT 3: OVAL WOODEN SERVING TRAY & ENGRAVED GOLD TONGS
+    // =========================================================================
+    const trayGroup = new THREE.Group();
+    trayGroup.position.set(0.95, 0, 0.65);
+    scene.add(trayGroup);
+    selectableGroups['tray'] = trayGroup;
+
+    // Exact stadium-left, squared-right silhouette matching the reference tray
+    function buildTrayOuterShape(totalLength, width, leftRadius) {
+      const s = new THREE.Shape();
+      const rightX = totalLength / 2;
+      const leftArcCenterX = -totalLength / 2 + leftRadius;
+      const halfW = width / 2;
+
+      s.moveTo(leftArcCenterX, -halfW);
+      s.lineTo(rightX - 0.12, -halfW);
+      s.quadraticCurveTo(rightX, -halfW, rightX, -halfW + 0.12);
+      s.lineTo(rightX, halfW - 0.12);
+      s.quadraticCurveTo(rightX, halfW, rightX - 0.12, halfW);
+      s.lineTo(leftArcCenterX, halfW);
+      s.absarc(leftArcCenterX, 0, leftRadius, Math.PI / 2, (3 * Math.PI) / 2, false);
+      s.closePath();
+      return s;
+    }
+
+    // 3A. Lower Deep Forest-Green Textured Plinth Base with Groove Seam
+    const trayLen = 10.6, trayW = 5.08;
+    const baseShape = buildTrayOuterShape(trayLen, trayW, trayW / 2);
+    const baseGeo = new THREE.ExtrudeGeometry(baseShape, {
+      depth: 0.25,
+      bevelEnabled: true,
+      bevelThickness: 0.025,
+      bevelSize: 0.025,
+      bevelSegments: 3,
+      curveSegments: 48
+    });
+    baseGeo.rotateX(Math.PI / 2);
+    baseGeo.center();
+    const trayBaseMesh = new THREE.Mesh(baseGeo, darkGreenStructuralMat);
+    trayBaseMesh.castShadow = true;
+    trayBaseMesh.receiveShadow = true;
+    trayGroup.add(trayBaseMesh);
+    registerExplodePart(trayBaseMesh, new THREE.Vector3(0, 0.13, 0), new THREE.Vector3(0, -0.95, 0));
+
+    // 3B. Upper Light Maple Frame with D-Shaped Recessed Center for the Tongs
+    const topTrayShape = buildTrayOuterShape(trayLen - 0.06, trayW - 0.06, (trayW - 0.06) / 2);
+    const wellArcCenterX = -(trayLen - 0.06) / 2 + (trayW - 0.06) / 2;
+    const wellStraightRightX = -0.25;
+    const wellRad = 1.90;
+
+    const wellCutout = new THREE.Path();
+    wellCutout.moveTo(wellArcCenterX, -wellRad);
+    wellCutout.lineTo(wellStraightRightX, -wellRad);
+    wellCutout.lineTo(wellStraightRightX, wellRad);
+    wellCutout.lineTo(wellArcCenterX, wellRad);
+    wellCutout.absarc(wellArcCenterX, 0, wellRad, Math.PI / 2, (3 * Math.PI) / 2, false);
+    wellCutout.closePath();
+    topTrayShape.holes.push(wellCutout);
+
+    const topTrayGeo = new THREE.ExtrudeGeometry(topTrayShape, {
+      depth: 0.23,
+      bevelEnabled: true,
+      bevelThickness: 0.02,
+      bevelSize: 0.02,
+      bevelSegments: 2,
+      curveSegments: 48
+    });
+    topTrayGeo.rotateX(Math.PI / 2);
+    topTrayGeo.center();
+
+    // Map horizontal wood grain seamlessly across the maple tray surface
+    const tPos = topTrayGeo.attributes.position;
+    const tUvs = topTrayGeo.attributes.uv;
+    for (let i = 0; i < tPos.count; i++) {
+      tUvs.setXY(i, (tPos.getX(i) + trayLen / 2) / trayLen, (tPos.getZ(i) + trayW / 2) / trayW);
+    }
+
+    const trayTopMesh = new THREE.Mesh(topTrayGeo, [mapleHorizontalMat, darkBorderMat]);
+    trayTopMesh.castShadow = true;
+    trayTopMesh.receiveShadow = true;
+    trayGroup.add(trayTopMesh);
+    registerExplodePart(trayTopMesh, new THREE.Vector3(0, 0.38, 0), new THREE.Vector3(0, 0, 0));
+
+    // 3C. Recessed Forest-Green Pebble-Leather Well Pad
+    const padShape = new THREE.Shape();
+    padShape.moveTo(wellArcCenterX, -wellRad);
+    padShape.lineTo(wellStraightRightX, -wellRad);
+    padShape.lineTo(wellStraightRightX, wellRad);
+    padShape.lineTo(wellArcCenterX, wellRad);
+    padShape.absarc(wellArcCenterX, 0, wellRad, Math.PI / 2, (3 * Math.PI) / 2, false);
+    padShape.closePath();
+    const padGeo = new THREE.ExtrudeGeometry(padShape, { depth: 0.06, bevelEnabled: false, curveSegments: 40 });
+    padGeo.rotateX(Math.PI / 2);
+    const padMesh = new THREE.Mesh(padGeo, forestGreenMat);
+    padMesh.receiveShadow = true;
+    trayGroup.add(padMesh);
+    registerExplodePart(padMesh, new THREE.Vector3(0, 0.30, 0), new THREE.Vector3(0, -0.42, 0));
+
+    // 3D. Engraved Brushed & Polished Gold Incense Tongs (matching diagonal placement on tray)
+    const tongsGroup = new THREE.Group();
+    tongsGroup.position.set(-1.65, 0.44, 0.85);
+    tongsGroup.rotation.y = 0.56;
+    scene.add(tongsGroup);
+    selectableGroups['tongs'] = tongsGroup;
+
+    function buildPhotorealGoldTongs() {
+      const g = new THREE.Group();
+
+      // Curved spring U-loop at the front-left end
+      const loopGeo = new THREE.TorusGeometry(0.19, 0.055, 16, 32, Math.PI);
+      loopGeo.rotateX(Math.PI / 2);
+      loopGeo.rotateZ(Math.PI / 2);
+      loopGeo.scale(1.1, 1.45, 1.0);
+      const loopMesh = new THREE.Mesh(loopGeo, polishedGoldMat);
+      loopMesh.position.set(-1.68, 0, 0);
+      loopMesh.castShadow = true;
+      g.add(loopMesh);
+
+      // Two gold arms with ornate engraved calligraphic/arabesque relief patterns and spatulate tips
+      [-1, 1].forEach((side) => {
+        const armGroup = new THREE.Group();
+
+        // Main flat gold bar
+        const barGeo = new THREE.BoxGeometry(2.85, 0.16, 0.048);
+        const barMesh = new THREE.Mesh(barGeo, polishedGoldMat);
+        barMesh.castShadow = true;
+        armGroup.add(barMesh);
+
+        // Engraved recessed decorative pattern segments along outer & top surfaces
+        for (let s = -1.1; s <= 0.9; s += 0.34) {
+          const groove = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.065, 0.056), engravedGoldRecessMat);
+          groove.position.set(s, 0.01 * Math.sin(s * 4), 0);
+          groove.rotation.z = 0.18 * Math.cos(s * 3);
+          armGroup.add(groove);
+        }
+
+        // Flared spatulate gripping paddle tip at the top-right end
+        const tipShape = new THREE.Shape();
+        tipShape.moveTo(0, -0.08);
+        tipShape.lineTo(0.58, -0.14);
+        tipShape.quadraticCurveTo(0.68, 0, 0.58, 0.14);
+        tipShape.lineTo(0, 0.08);
+        tipShape.closePath();
+        const tipGeo = new THREE.ExtrudeGeometry(tipShape, {
+          depth: 0.042,
+          bevelEnabled: true,
+          bevelThickness: 0.008,
+          bevelSize: 0.008,
+          bevelSegments: 2
+        });
+        tipGeo.center();
+        const tipMesh = new THREE.Mesh(tipGeo, polishedGoldMat);
+        tipMesh.position.set(1.66, 0, -side * 0.04);
+        tipMesh.rotation.y = side * 0.14;
+        tipMesh.castShadow = true;
+        armGroup.add(tipMesh);
+
+        armGroup.position.set(-0.26, 0, side * 0.18);
+        armGroup.rotation.y = -side * 0.032;
+        g.add(armGroup);
+      });
+
+      return g;
+    }
+
+    const tongsMeshObj = buildPhotorealGoldTongs();
+    tongsGroup.add(tongsMeshObj);
+    registerExplodePart(tongsMeshObj, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1.5, 0));
+
+    // =========================================================================
+    // PRODUCT 2: MATCHING FOREST-GREEN INCENSE STORAGE BOX WITH HINGED LID
+    // =========================================================================
+    const storageBoxGroup = new THREE.Group();
+    // Positioned to the left of the tray at the exact angle from the reference photograph
+    storageBoxGroup.position.set(-4.35, 0, -1.65);
+    storageBoxGroup.rotation.y = 0.22;
+    scene.add(storageBoxGroup);
+    selectableGroups['box'] = storageBoxGroup;
+
+    const boxW = 4.85, boxH = 1.44, boxD = 2.62, wallT = 0.18;
+
+    // 2A. Outer Forest-Green Pebble-Leather Lower Box Base with Gold Lattice Front
+    const boxBaseGroup = new THREE.Group();
+
+    const bottomSlab = new THREE.Mesh(new THREE.BoxGeometry(boxW, wallT, boxD), forestGreenMat);
+    bottomSlab.position.y = wallT / 2;
+    bottomSlab.castShadow = true;
+    bottomSlab.receiveShadow = true;
+    boxBaseGroup.add(bottomSlab);
+
+    const frontWallMat = new THREE.MeshStandardMaterial({
+      map: goldBoxFrontTex,
+      bumpMap: greenPebble.bumpMap,
+      bumpScale: 0.015,
+      roughness: 0.48,
+      metalness: 0.28,
+      envMapIntensity: 0.75
+    });
+    const frontWallMaterials = [
+      forestGreenMat,
+      forestGreenMat,
+      forestGreenMat,
+      forestGreenMat,
+      frontWallMat,
+      forestGreenMat
+    ];
+    const frontWallMesh = new THREE.Mesh(new THREE.BoxGeometry(boxW, boxH, wallT), frontWallMaterials);
+    frontWallMesh.position.set(0, boxH / 2, boxD / 2 - wallT / 2);
+    frontWallMesh.castShadow = true;
+    frontWallMesh.receiveShadow = true;
+    boxBaseGroup.add(frontWallMesh);
+
+    const backWallMesh = new THREE.Mesh(new THREE.BoxGeometry(boxW, boxH, wallT), forestGreenMat);
+    backWallMesh.position.set(0, boxH / 2, -boxD / 2 + wallT / 2);
+    backWallMesh.castShadow = true;
+    boxBaseGroup.add(backWallMesh);
+
+    const leftWallMesh = new THREE.Mesh(new THREE.BoxGeometry(wallT, boxH, boxD - wallT * 2), forestGreenMat);
+    leftWallMesh.position.set(-boxW / 2 + wallT / 2, boxH / 2, 0);
+    leftWallMesh.castShadow = true;
+    boxBaseGroup.add(leftWallMesh);
+
+    const rightWallMesh = new THREE.Mesh(new THREE.BoxGeometry(wallT, boxH, boxD - wallT * 2), forestGreenMat);
+    rightWallMesh.position.set(boxW / 2 - wallT / 2, boxH / 2, 0);
+    rightWallMesh.castShadow = true;
+    boxBaseGroup.add(rightWallMesh);
+
+    storageBoxGroup.add(boxBaseGroup);
+    registerExplodePart(boxBaseGroup, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, -0.55, 0));
+
+    // 2B. Polished Gold Spherical Clasp Knob on Front Face
+    const knobGroup = new THREE.Group();
+    const knobCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.085, 0.12, 24), polishedGoldMat);
+    knobCollar.rotation.x = Math.PI / 2;
+    knobGroup.add(knobCollar);
+
+    const knobSphere = new THREE.Mesh(new THREE.SphereGeometry(0.155, 32, 32), polishedGoldMat);
+    knobSphere.position.z = 0.13;
+    knobSphere.castShadow = true;
+    knobGroup.add(knobSphere);
+
+    storageBoxGroup.add(knobGroup);
+    registerExplodePart(
+      knobGroup,
+      new THREE.Vector3(0, boxH * 0.68, boxD / 2 + 0.03),
+      new THREE.Vector3(0, boxH * 0.68, boxD / 2 + 1.1)
+    );
+
+    // 2C. Generous Bed of Translucent Golden Omani Frankincense Tears Inside the Box
+    const frankincenseBedGroup = new THREE.Group();
+    const innerLinerBox = new THREE.Mesh(new THREE.BoxGeometry(boxW - 0.36, 0.72, boxD - 0.36), forestGreenMat);
+    innerLinerBox.position.set(0, 0.48, 0);
+    frankincenseBedGroup.add(innerLinerBox);
+
+    // Multi-layered natural mound of frankincense tears filling the open box
+    for (let ix = -1.95; ix <= 1.95; ix += 0.31) {
+      for (let iz = -0.92; iz <= 0.92; iz += 0.31) {
+        const seed = Math.abs(Math.sin(ix * 12.3 + iz * 7.9));
+        const radius = 0.14 + (seed * 0.075);
+        const nuggetGeo = new THREE.DodecahedronGeometry(radius, 1);
+        const mat = seed > 0.48 ? frankincenseMat : frankincenseLightMat;
+        const nugget = new THREE.Mesh(nuggetGeo, mat);
+        nugget.position.set(
+          ix + (seed - 0.5) * 0.14,
+          0.95 + Math.cos(ix * 0.8) * 0.08 + (seed * 0.10),
+          iz + (Math.cos(ix * 5) * 0.08)
+        );
+        nugget.rotation.set(ix * 2.1, iz * 3.4, seed * 4.0);
+        nugget.scale.set(1.22, 0.84, 1.05);
+        nugget.castShadow = true;
+        nugget.receiveShadow = true;
+        frankincenseBedGroup.add(nugget);
+      }
+    }
+
+    storageBoxGroup.add(frankincenseBedGroup);
+    registerExplodePart(frankincenseBedGroup, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0.88, 0));
+
+    // 2D. Functional Hinged Lid with Deep Forest-Green Beveled Frame & Cream Suede Inner Plaque
+    const lidHingePivot = new THREE.Group();
+    const hingePos = new THREE.Vector3(0, boxH, -boxD / 2 + wallT / 2);
+    storageBoxGroup.add(lidHingePivot);
+    registerExplodePart(lidHingePivot, hingePos, new THREE.Vector3(0, 1.75, -0.45));
+
+    const lidAssembly = new THREE.Group();
+    const lidCenterZ = boxD / 2 - wallT / 2;
+
+    // Outer green lid shell with recessed inner lip
+    const lidTopSlab = new THREE.Mesh(new THREE.BoxGeometry(boxW, 0.14, boxD), forestGreenMat);
+    lidTopSlab.position.set(0, 0.28, lidCenterZ);
+    lidTopSlab.castShadow = true;
+    lidTopSlab.receiveShadow = true;
+    lidAssembly.add(lidTopSlab);
+
+    // 4 beveled green walls of the lid so the cream suede card sits realistically recessed inside
+    const lidFrontRim = new THREE.Mesh(new THREE.BoxGeometry(boxW, 0.24, wallT), forestGreenMat);
+    lidFrontRim.position.set(0, 0.12, boxD - wallT);
+    lidFrontRim.castShadow = true;
+    lidAssembly.add(lidFrontRim);
+
+    const lidBackRim = new THREE.Mesh(new THREE.BoxGeometry(boxW, 0.24, wallT), forestGreenMat);
+    lidBackRim.position.set(0, 0.12, 0);
+    lidAssembly.add(lidBackRim);
+
+    const lidLeftRim = new THREE.Mesh(new THREE.BoxGeometry(wallT, 0.24, boxD - wallT * 2), forestGreenMat);
+    lidLeftRim.position.set(-boxW / 2 + wallT / 2, 0.12, lidCenterZ);
+    lidLeftRim.castShadow = true;
+    lidAssembly.add(lidLeftRim);
+
+    const lidRightRim = new THREE.Mesh(new THREE.BoxGeometry(wallT, 0.24, boxD - wallT * 2), forestGreenMat);
+    lidRightRim.position.set(boxW / 2 - wallT / 2, 0.12, lidCenterZ);
+    lidRightRim.castShadow = true;
+    lidAssembly.add(lidRightRim);
+
+    // Recessed Cream Suede Inner Lid Plaque with Official Oman Housing Bank + National Day 56 Branding
+    const lidLogoTex = createOfficialBrandingTexture(true, true);
+    const lidBlankTex = createOfficialBrandingTexture(true, false);
+    const lidPlaqueMat = new THREE.MeshStandardMaterial({
+      map: lidLogoTex,
+      roughness: 0.76,
+      metalness: 0.02
+    });
+    const lidInnerPlaque = new THREE.Mesh(
+      new THREE.PlaneGeometry(boxW - wallT * 2.2, boxD - wallT * 2.2),
+      lidPlaqueMat
+    );
+    lidInnerPlaque.rotation.x = Math.PI / 2;
+    lidInnerPlaque.position.set(0, 0.16, lidCenterZ);
+    lidAssembly.add(lidInnerPlaque);
+
+    lidHingePivot.add(lidAssembly);
+
+    // =========================================================================
+    // 5. SUBTLE SELECTION RING & INSPECTOR METADATA
+    // =========================================================================
+    const ringGeo = new THREE.RingGeometry(2.55, 2.70, 64);
+    ringGeo.rotateX(-Math.PI / 2);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xeab308,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.55
+    });
+    const selectionRing = new THREE.Mesh(ringGeo, ringMat);
+    selectionRing.position.set(3.25, 0.015, 0.65);
+    scene.add(selectionRing);
+
+    const componentSpecs = {
+      mabkhara: {
+        name: 'Omani Wooden Mabkhara',
+        title: '1. Omani Wooden Mabkhara',
+        desc: 'Natural light maple exterior panels with cathedral wood grain, 2 staggered rows of laser-cut flame apertures, an Omani arch cutout on the tray-facing side, a wider shallow ogee arch beneath the front logo area, deep forest-green pebble-leather inner core, and a recessed matte-black metal burner cup.',
+        ringPos: [3.25, 0.015, 0.65],
+        ringScale: 1.05
+      },
+      box: {
+        name: 'Incense Storage Box',
+        title: '2. Matching Incense Storage Box',
+        desc: 'Rectangular deep forest-green pebble-textured box with a gold Islamic geometric lattice on the front panel, polished gold spherical knob, generous bed of golden Omani frankincense tears, and functional hinged lid with a recessed cream suede inner plaque.',
+        ringPos: [-4.35, 0.015, -1.65],
+        ringScale: 1.15
+      },
+      tray: {
+        name: 'Oval Serving Tray',
+        title: '3. Oval Serving Tray',
+        desc: 'Natural light maple top frame laminated onto a deep forest-green pebble-textured plinth base, featuring a D-shaped recessed green leatherette center on the left and a square burner platform on the right.',
+        ringPos: [0.95, 0.015, 0.65],
+        ringScale: 1.95
+      },
+      tongs: {
+        name: 'Engraved Gold Tongs',
+        title: '4. Engraved Gold Incense Tongs',
+        desc: 'Polished and brushed gold metal incense tongs featuring traditional engraved calligraphic relief channels along the arms and angled spatulate gripping tips, resting diagonally inside the recessed tray.',
+        ringPos: [-1.65, 0.45, 0.85],
+        ringScale: 0.65
+      }
+    };
+
+    // =========================================================================
+    // 6. INTERACTIVE STATE & CONTROLS LOGIC
+    // =========================================================================
+    const state = {
+      viewMode: 'all',
+      selectedKey: 'mabkhara',
+      explodeAmount: 0,
+      lidAngleDeg: 80,
+      showLogoGuide: true,
+      autoSpin: false,
+      wireframe: false,
+      camAnim: null,
+      rotations: {
+        mabkhara: { x: 0, y: 0 },
+        box: { x: 0, y: 13 },
+        tray: { x: 0, y: 0 },
+        tongs: { x: 0, y: 32 }
+      }
+    };
+
+    function applyLidAngle(deg) {
+      state.lidAngleDeg = deg;
+      lidHingePivot.rotation.x = -THREE.MathUtils.degToRad(deg);
+      const btnLid = document.getElementById('btn-toggle-lid');
+      btnLid.textContent = deg > 15 ? 'Close Lid' : 'Open Lid';
+    }
+    applyLidAngle(state.lidAngleDeg);
+
+    function applyExplode(amount01) {
+      state.explodeAmount = amount01;
+      explodeTargets.forEach((item) => {
+        item.obj.position.lerpVectors(item.normalPos, item.explodedPos, amount01);
+      });
+      const btnExplode = document.getElementById('btn-toggle-explode');
+      btnExplode.textContent = amount01 > 0.1 ? 'Normal View' : 'Explode Model';
+      btnExplode.classList.toggle('btn-active', amount01 > 0.1);
+    }
+
+    function animateCameraTo(targetPos, targetLookAt) {
+      state.camAnim = {
+        startPos: camera.position.clone(),
+        endPos: targetPos.clone(),
+        startLook: controls.target.clone(),
+        endLook: targetLookAt.clone(),
+        progress: 0
+      };
+    }
+
+    function selectObject(key) {
+      state.selectedKey = key;
+      document.querySelectorAll('.sel-btn').forEach((btn) => {
+        btn.classList.toggle('btn-active', btn.dataset.sel === key);
+      });
+
+      const spec = componentSpecs[key];
+      document.getElementById('selected-label').textContent = spec.name;
+      document.getElementById('spec-title').textContent = spec.title;
+      document.getElementById('spec-desc').textContent = spec.desc;
+
+      selectionRing.position.set(...spec.ringPos);
+      selectionRing.scale.set(spec.ringScale, spec.ringScale, 1);
+
+      const rot = state.rotations[key];
+      document.getElementById('slider-obj-rot-y').value = rot.y;
+      document.getElementById('slider-obj-rot-x').value = rot.x;
+      document.getElementById('rot-readout').textContent = `Y: ${rot.y}° | X: ${rot.x}°`;
+    }
+
+    function updateSelectedRotation(newY, newX) {
+      const key = state.selectedKey;
+      state.rotations[key].y = newY;
+      state.rotations[key].x = newX;
+      const grp = selectableGroups[key];
+      if (grp) {
+        grp.rotation.y = THREE.MathUtils.degToRad(newY);
+        grp.rotation.x = THREE.MathUtils.degToRad(newX);
+      }
+      document.getElementById('rot-readout').textContent = `Y: ${newY}° | X: ${newX}°`;
+    }
+
+    function setProductViewMode(mode) {
+      state.viewMode = mode;
+      document.querySelectorAll('[id^="mode-"]').forEach((b) => b.classList.remove('btn-active'));
+      document.getElementById(`mode-${mode}`).classList.add('btn-active');
+
+      if (mode === 'all') {
+        mabkharaGroup.visible = true;
+        storageBoxGroup.visible = true;
+        trayGroup.visible = true;
+        tongsGroup.visible = true;
+        trayShadowPlane.visible = true;
+        boxShadowPlane.visible = true;
+        animateCameraTo(new THREE.Vector3(14.5, 10.8, 17.5), new THREE.Vector3(-0.2, 2.1, 0.2));
+      } else if (mode === 'mabkhara') {
+        mabkharaGroup.visible = true;
+        storageBoxGroup.visible = false;
+        trayGroup.visible = false;
+        tongsGroup.visible = false;
+        trayShadowPlane.visible = true;
+        boxShadowPlane.visible = false;
+        selectObject('mabkhara');
+        animateCameraTo(new THREE.Vector3(3.25 + 7.8, 6.2, 0.65 + 8.8), new THREE.Vector3(3.25, 2.5, 0.65));
+      } else if (mode === 'box') {
+        mabkharaGroup.visible = false;
+        storageBoxGroup.visible = true;
+        trayGroup.visible = false;
+        tongsGroup.visible = false;
+        trayShadowPlane.visible = false;
+        boxShadowPlane.visible = true;
+        selectObject('box');
+        animateCameraTo(new THREE.Vector3(-4.35 + 6.8, 5.8, -1.65 + 7.8), new THREE.Vector3(-4.35, 1.3, -1.65));
+      } else if (mode === 'tray') {
+        mabkharaGroup.visible = false;
+        storageBoxGroup.visible = false;
+        trayGroup.visible = true;
+        tongsGroup.visible = true;
+        trayShadowPlane.visible = true;
+        boxShadowPlane.visible = false;
+        selectObject('tray');
+        animateCameraTo(new THREE.Vector3(0.95 + 7.5, 7.0, 0.65 + 9.8), new THREE.Vector3(0.95, 0.4, 0.65));
+      }
+    }
+
+    // =========================================================================
+    // 7. UI EVENT LISTENERS & RAYCASTING
+    // =========================================================================
+    document.getElementById('mode-all').addEventListener('click', () => setProductViewMode('all'));
+    document.getElementById('mode-mabkhara').addEventListener('click', () => setProductViewMode('mabkhara'));
+    document.getElementById('mode-box').addEventListener('click', () => setProductViewMode('box'));
+    document.getElementById('mode-tray').addEventListener('click', () => setProductViewMode('tray'));
+
+    const camPresets = {
+      iso: { pos: new THREE.Vector3(14.5, 10.8, 17.5), look: new THREE.Vector3(-0.2, 2.1, 0.2) },
+      front: { pos: new THREE.Vector3(0, 3.0, 21), look: new THREE.Vector3(0, 2.1, 0) },
+      back: { pos: new THREE.Vector3(0, 3.0, -21), look: new THREE.Vector3(0, 2.1, 0) },
+      left: { pos: new THREE.Vector3(-21, 3.0, 0), look: new THREE.Vector3(0, 2.1, 0) },
+      right: { pos: new THREE.Vector3(21, 3.0, 0), look: new THREE.Vector3(0, 2.1, 0) },
+      top: { pos: new THREE.Vector3(0, 24, 0.01), look: new THREE.Vector3(0, 0, 0) },
+      bottom: { pos: new THREE.Vector3(0, -20, 0.01), look: new THREE.Vector3(0, 1.5, 0) }
+    };
+
+    document.querySelectorAll('.cam-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cam-btn').forEach((b) => b.classList.remove('btn-active'));
+        btn.classList.add('btn-active');
+        const preset = camPresets[btn.dataset.cam];
+        if (preset) animateCameraTo(preset.pos, preset.look);
+      });
+    });
+
+    document.getElementById('btn-reset-cam').addEventListener('click', () => {
+      setProductViewMode('all');
+      document.querySelectorAll('.cam-btn').forEach((b) => b.classList.toggle('btn-active', b.dataset.cam === 'iso'));
+    });
+
+    const sliderExplode = document.getElementById('slider-explode');
+    sliderExplode.addEventListener('input', (e) => {
+      applyExplode(parseFloat(e.target.value) / 100);
+    });
+
+    document.getElementById('btn-toggle-explode').addEventListener('click', () => {
+      const targetVal = state.explodeAmount > 0.1 ? 0 : 100;
+      sliderExplode.value = targetVal;
+      applyExplode(targetVal / 100);
+    });
+
+    const sliderLid = document.getElementById('slider-lid');
+    sliderLid.addEventListener('input', (e) => {
+      applyLidAngle(parseFloat(e.target.value));
+    });
+
+    document.getElementById('btn-toggle-lid').addEventListener('click', () => {
+      const targetDeg = state.lidAngleDeg > 15 ? 0 : 80;
+      sliderLid.value = targetDeg;
+      applyLidAngle(targetDeg);
+    });
+
+    document.getElementById('btn-toggle-branding').addEventListener('click', (e) => {
+      state.showLogoGuide = !state.showLogoGuide;
+      if (state.showLogoGuide) {
+        mabkharaLogoMat.map = mabkharaLogoTex;
+        mabkharaLogoMat.opacity = 1.0;
+        lidPlaqueMat.map = lidLogoTex;
+        e.currentTarget.textContent = '56 Logo Guide';
+        e.currentTarget.classList.add('btn-active');
+      } else {
+        mabkharaLogoMat.map = mabkharaBlankTex;
+        mabkharaLogoMat.opacity = 0.0;
+        lidPlaqueMat.map = lidBlankTex;
+        e.currentTarget.textContent = 'Clean Blank';
+        e.currentTarget.classList.remove('btn-active');
+      }
+      mabkharaLogoMat.needsUpdate = true;
+      lidPlaqueMat.needsUpdate = true;
+    });
+
+    document.querySelectorAll('.sel-btn').forEach((btn) => {
+      btn.addEventListener('click', () => selectObject(btn.dataset.sel));
+    });
+
+    const sliderRotY = document.getElementById('slider-obj-rot-y');
+    const sliderRotX = document.getElementById('slider-obj-rot-x');
+    sliderRotY.addEventListener('input', () => {
+      updateSelectedRotation(parseFloat(sliderRotY.value), parseFloat(sliderRotX.value));
+    });
+    sliderRotX.addEventListener('input', () => {
+      updateSelectedRotation(parseFloat(sliderRotY.value), parseFloat(sliderRotX.value));
+    });
+
+    document.getElementById('btn-reset-rot').addEventListener('click', () => {
+      state.rotations = {
+        mabkhara: { x: 0, y: 0 },
+        box: { x: 0, y: 13 },
+        tray: { x: 0, y: 0 },
+        tongs: { x: 0, y: 32 }
+      };
+      Object.keys(state.rotations).forEach((k) => {
+        const g = selectableGroups[k];
+        g.rotation.set(
+          THREE.MathUtils.degToRad(state.rotations[k].x),
+          THREE.MathUtils.degToRad(state.rotations[k].y),
+          0
+        );
+      });
+      selectObject(state.selectedKey);
+    });
+
+    document.getElementById('btn-auto-spin').addEventListener('click', (e) => {
+      state.autoSpin = !state.autoSpin;
+      controls.autoRotate = state.autoSpin;
+      controls.autoRotateSpeed = 1.6;
+      e.currentTarget.textContent = `Auto-Turntable: ${state.autoSpin ? 'On' : 'Off'}`;
+      e.currentTarget.classList.toggle('btn-active', state.autoSpin);
+    });
+
+    document.getElementById('btn-wireframe').addEventListener('click', (e) => {
+      state.wireframe = !state.wireframe;
+      [
+        mapleVerticalMat,
+        mapleHorizontalMat,
+        forestGreenMat,
+        darkBorderMat,
+        darkGreenStructuralMat,
+        blackMetalMat,
+        polishedGoldMat
+      ].forEach((m) => {
+        m.wireframe = state.wireframe;
+      });
+      e.currentTarget.textContent = `Wireframe: ${state.wireframe ? 'On' : 'Off'}`;
+      e.currentTarget.classList.toggle('btn-active', state.wireframe);
+    });
+
+    // Raycaster for direct 3D part selection
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let pointerDownPos = { x: 0, y: 0 };
+
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      pointerDownPos = { x: e.clientX, y: e.clientY };
+    });
+
+    renderer.domElement.addEventListener('pointerup', (e) => {
+      const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+      if (dist > 6) return;
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(pointer, camera);
+      const intersects = raycaster.intersectObjects(scene.children, true);
+      for (let i = 0; i < intersects.length; i++) {
+        let obj = intersects[i].object;
+        while (obj) {
+          for (const [key, grp] of Object.entries(selectableGroups)) {
+            if (obj === grp) {
+              selectObject(key);
+              return;
+            }
+          }
+          obj = obj.parent;
+        }
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      const w = mount.clientWidth;
+      const h = mount.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    });
+
+    // =========================================================================
+    // 8. MAIN RENDER LOOP
+    // =========================================================================
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (state.camAnim) {
+        state.camAnim.progress += 0.06;
+        const t = Math.min(state.camAnim.progress, 1);
+        const ease = 1 - Math.pow(1 - t, 3);
+        camera.position.lerpVectors(state.camAnim.startPos, state.camAnim.endPos, ease);
+        controls.target.lerpVectors(state.camAnim.startLook, state.camAnim.endLook, ease);
+        if (t >= 1) state.camAnim = null;
+      }
+
+      // Automatically hide marble studio surface when inspecting from underneath so bottom view is completely clear
+      const isBelowFloor = camera.position.y < 0.25;
+      studioTableMesh.visible = !isBelowFloor;
+      trayShadowPlane.visible = !isBelowFloor && (state.viewMode === 'all' || state.viewMode === 'mabkhara' || state.viewMode === 'tray');
+      boxShadowPlane.visible = !isBelowFloor && (state.viewMode === 'all' || state.viewMode === 'box');
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    window.onload = () => {
+      selectObject('mabkhara');
+      animate();
+    };
+  </script>
+</body>
+</html>
